@@ -6,6 +6,17 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 }).addTo(map);
 
 let smData = null;
+let lbData = null;
+
+var listedBuildingStyle = {
+    radius: 4,
+    fillColor: "blue",
+    color: "blue",
+    weight: 1,
+    opacity: 1,
+    fillOpacity: 0.25
+};
+
 
 // Load and display Scheduled Monuments layer
 fetch('data/SM_Swansea_WGS84.geojson')
@@ -18,6 +29,18 @@ fetch('data/SM_Swansea_WGS84.geojson')
                 weight: 1.5,
                 fillColor: '#cc0000',
                 fillOpacity: 0.25
+            }
+        }).addTo(map); // add the data to the map
+    });
+
+// Load and display Listed Buildings layer
+fetch('data/Listed_building_WGS84.geojson')
+    .then(r => r.json())
+    .then(data => {
+        lbData = data; // Save the data so it can be queried later
+        L.geoJSON(data, {
+            pointToLayer: function (feature,latlng) {
+                return L.circleMarker(latlng, listedBuildingStyle );
             }
         }).addTo(map); // add the data to the map
     });
@@ -83,7 +106,7 @@ function renderResults(features) {
                         <dt>Type</dt><dd>${p.SiteType}</dd>
                         <dt>Period</dt><dd>${p.Period}</dd>
                         <dt>Community</dt><dd>${p.Community}</dd>
-                        <dt>Designated</dt><dd>${p.DesignationDate.slice(0, 10)}</dd>
+                        <dt>Designated</dt><dd>${p.DesignationDate ? p.DesignationDate.slice(0, 10) : 'Unknown'}</dd>
                     </dl>
                     <a href="${p.Report}" target="_blank" rel="noopener">View Cadw Report &rarr;</a>
                 </div>`;
