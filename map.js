@@ -87,15 +87,20 @@ map.on('draw:created', function (e) {
 
 // drawnPolygon is the shape the user drew, passed in from the draw event
 function runSpatialQuery(drawnPolygon) {
-    if (!smData) return; // if the GeoJSON hasn't loaded yet, stop here
+    if (!smData || !lbData) return; // if the sm or '||' lb GeoJSON hasn't loaded yet, stop here
 
     // create a new list called hits
     // go through every scheduled monument in smData and keep only the ones that intersect the drawn polygon
-    const hits = smData.features.filter(feature =>
+    const smHits = smData.features.filter(feature =>
         turf.booleanIntersects(drawnPolygon, feature) // returns true or false for each monument
     );
+    const lbHits = lbData.features.filter(feature => 
+        turf.booleanIntersects(drawnPolygon, feature)
+    );
 
-    renderResults(hits); // pass the hits list to the function that displays the results
+    const allHits = [...smHits, ... lbHits];
+
+    renderResults(allHits); // pass the hits list to the function that displays the results
 }
 
 // features is the hits list passed in from runSpatialQuery
@@ -105,14 +110,20 @@ function renderResults(features) {
 
     if (features.length === 0) {
         // if no monuments were hit, show a message instead
-        list.innerHTML = '<p class="no-results">No scheduled monuments intersect this area.</p>';
+        list.innerHTML = '<p class="no-results">No assets intersect this area.</p>';
     } else {
         // map() loops through each feature and transforms it into a chunk of HTML
         // join('') converts the resulting list of HTML strings into one single string
         // innerHTML puts that string into the results div on the page
         list.innerHTML = features.map(f => {
             const p = f.properties; // shortcut so we can write p.Name instead of f.properties.Name
-            return `
+
+            // check which dataset this feature is from (sm or lb) by looking for a field unique to each one
+            // const isSM = p.SAMNUMBER !== undefined is asking "does this feature have a SAM number field"
+            // if yes isSM becomes true
+            const isSM = p.SAMNUMBER !== undefined
+            if (isSM) {
+                return `
                 <div class="result-item">
                     <h3>${p.Name.trim()}</h3>
                     <dl>
@@ -124,6 +135,18 @@ function renderResults(features) {
                     </dl>
                     <a href="${p.Report}" target="_blank" rel="noopener">View Cadw Report &rarr;</a>
                 </div>`;
+            } else {
+                return `
+                <div class="result-item">
+                    <h3>${p.Name.trim()}</h3>
+                    <dl>
+                        <dt>Grade</dt><dd>${p.Grade}</dd>
+                        <dt>Community</dt><dd>${p.Community}</dd>
+                        <dt>Designated</dt><dd>${p.DesignationDate ? p.DesignationDate.slice(0, 10) : 'Unknown'}</dd>
+                    </dl>
+                    <a href="${p.Report}" target="_blank" rel="noopener">View Cadw Report &rarr;</a>
+                </div>`;
+            }
         }).join(''); // converts the list into a single string with nothing between each item
     }
 
