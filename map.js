@@ -1,9 +1,24 @@
 const map = L.map('map').setView([51.62, -3.94], 12);
 
-L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+var osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 }).addTo(map);
+
+var baseMaps = {
+    "OpenStreetMap": osm,
+}
+
+// Create empty layer groups upfront so they can be referenced in the layer control
+let sm = L.layerGroup().addTo(map);
+let lb = L.layerGroup().addTo(map);
+
+let overlayMaps = {
+    "Scheduled Monuments": sm,
+    "Listed Buildings": lb
+}
+
+var layerControl = L.control.layers(baseMaps, overlayMaps).addTo(map);
 
 let smData = null;
 let lbData = null;
@@ -17,7 +32,6 @@ var listedBuildingStyle = {
     fillOpacity: 0.25
 };
 
-
 // Load and display Scheduled Monuments layer
 fetch('data/SM_Swansea_WGS84.geojson')
     .then(r => r.json())
@@ -30,7 +44,7 @@ fetch('data/SM_Swansea_WGS84.geojson')
                 fillColor: '#cc0000',
                 fillOpacity: 0.25
             }
-        }).addTo(map); // add the data to the map
+        }).addTo(sm); // add into the sm layer group
     });
 
 // Load and display Listed Buildings layer
@@ -39,10 +53,10 @@ fetch('data/Listed_building_WGS84.geojson')
     .then(data => {
         lbData = data; // Save the data so it can be queried later
         L.geoJSON(data, {
-            pointToLayer: function (feature,latlng) {
-                return L.circleMarker(latlng, listedBuildingStyle );
+            pointToLayer: function (feature, latlng) {
+                return L.circleMarker(latlng, listedBuildingStyle);
             }
-        }).addTo(map); // add the data to the map
+        }).addTo(lb); // add into the lb layer group
     });
 
 // Draw toolbar — polygons only
