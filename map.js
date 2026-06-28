@@ -182,3 +182,7 @@ function renderResults(smFeatures, lbFeatures) {
 document.getElementById('close-results').addEventListener('click', function () {
 document.getElementById('results-panel').classList.add('hidden'); // add hidden class back to hide the panel
 });
+
+document.getElementById('refresh').addEventListener('click', function () {
+    location.reload();
+})
