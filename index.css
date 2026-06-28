@@ -109,12 +109,18 @@ body {
     text-align: center;
 }
 
+.tabs {
+  display: flex;
+  flex-direction: column;
+   
+}
 /* Style the tab */
 .tab {
   overflow: hidden;
   border: 1px solid #ccc;
   background-color: #f1f1f1;
   flex-shrink: 0;
+   
 }
 
 /* Style the buttons that are used to open the tab content */

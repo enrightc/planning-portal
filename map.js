@@ -20,44 +20,50 @@ let overlayMaps = {
 
 var layerControl = L.control.layers(baseMaps, overlayMaps).addTo(map);
 
-let smData = null;
-let lbData = null;
-
-var listedBuildingStyle = {
-    radius: 4,
-    fillColor: "blue",
-    color: "blue",
-    weight: 1,
-    opacity: 1,
-    fillOpacity: 0.25
-};
-
-// Load and display Scheduled Monuments layer
-fetch('data/SM_Swansea_WGS84.geojson')
-    .then(r => r.json())
-    .then(data => {
-        smData = data; // Save the data so it can be queried later
-        L.geoJSON(data, {
-            style: {
-                color: '#8B0000',
+const datasets = [
+    { 
+        id: 'scheduled-monuments', 
+        label: 'Scheduled Monuments', 
+        data: null, 
+        file: 'data/SM_Swansea_WGS84.geojson',
+        style: { color: '#8B0000',
                 weight: 1.5,
                 fillColor: '#cc0000',
-                fillOpacity: 0.25
-            }
-        }).addTo(sm); // add into the sm layer group
-    });
+                fillOpacity: 0.25}
+                },
+    {   id: 'listed-buildings', 
+        label: 'Listed Buildings', 
+        data: null, 
+        file: 'data/Listed_building_WGS84.geojson',
+        type: 'point',
+        style: { radius: 4,
+        fillColor: "blue",
+        color: "blue",
+        weight: 1,
+        opacity: 1,
+        fillOpacity: 0.25}
+    },
+    // add more here...
+];
 
-// Load and display Listed Buildings layer
-fetch('data/Listed_building_WGS84.geojson')
+
+
+// Load and display Scheduled Monuments layer
+datasets.forEach(dataset => {
+    fetch(dataset.file)
     .then(r => r.json())
     .then(data => {
-        lbData = data; // Save the data so it can be queried later
+        dataset.data = data; // Save the data so it can be queried later
         L.geoJSON(data, {
-            pointToLayer: function (feature, latlng) {
-                return L.circleMarker(latlng, listedBuildingStyle);
-            }
-        }).addTo(lb); // add into the lb layer group
+            pointToLayer: dataset.type === 'point' 
+                ? (feature, latlng) => L.circleMarker(latlng, dataset.style)
+                : null,
+            style: dataset.type !== 'point' ? dataset.style : null
+        }).addTo(map);
     });
+})
+
+
 
 // Draw toolbar — polygons only
 var drawnFeatures = new L.FeatureGroup();
@@ -99,28 +105,6 @@ function runSpatialQuery(drawnPolygon) {
     );
 
     renderResults(smHits, lbHits); // pass sm and lb hits separately to renderResults
-}
-
-
-function openFeature(evt, featureType) {
-  // Declare all variables
-  var i, tabcontent, tablinks;
-
-  // Get all elements with class="tabcontent" and hide them
-  tabcontent = document.getElementsByClassName("tabcontent");
-  for (i = 0; i < tabcontent.length; i++) {
-    tabcontent[i].style.display = "none";
-  }
-
-  // Get all elements with class="tablinks" and remove the class "active"
-  tablinks = document.getElementsByClassName("tablinks");
-  for (i = 0; i < tablinks.length; i++) {
-    tablinks[i].className = tablinks[i].className.replace(" active", "");
-  }
-
-  // Show the current tab, and add an "active" class to the button that opened the tab
-  document.getElementById(featureType).style.display = "block";
-  evt.currentTarget.className += " active";
 }
 
 function buildFeatureList(f) {
