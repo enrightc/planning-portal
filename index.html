@@ -21,10 +21,28 @@
 
     <div id="results-panel" class="hidden">
         <div id="results-header">
-            <h2>Intersecting Scheduled Monuments</h2>
+            <h2>Intersecting Features</h2>
             <button id="close-results">&#x2715;</button>
         </div>
+        
+
+        <!-- Tab links -->
+        <div class="tab">
+        <button class="tablinks" onclick="openFeature(event, 'scheduled-monuments')">Scheduled Monuments</button>
+        <button class="tablinks" onclick="openFeature(event, 'listed-buildings')">Listed Buildings</button>
+        </div>
+
+        <!-- Tab content -->
+        <div id="scheduled-monuments" class="tabcontent">
+            <h3>Scheduled Monuments</h3>
+        </div>
+
+        <div id="listed-buildings" class="tabcontent">
+            <h3>Listed Buildings</h3>
+        </div>
+
         <div id="results-list"></div>
+
     </div>
 
     <script src="map.js"></script>
