@@ -123,28 +123,11 @@ function openFeature(evt, featureType) {
   evt.currentTarget.className += " active";
 }
 
-
-// features is the hits list passed in from runSpatialQuery
-function renderResults(smFeatures, lbFeatures) {
-    const panel = document.getElementById('results-panel'); // find the results panel div
-    const smList = document.getElementById('scheduled-monuments'); // find the div where results will be listed
-    const lbList = document.getElementById('listed-buildings'); // find the div where results will be listed
-
-
-    if (smFeatures.length === 0) {
-        // if no monuments were hit, show a message instead
-        smList.innerHTML = '<p class="no-results">No assets intersect this area.</p>';
-    } else {
-        // map() loops through each feature and transforms it into a chunk of HTML
-        // join('') converts the resulting list of HTML strings into one single string
-        // innerHTML puts that string into the results div on the page
-        smList.innerHTML = smFeatures.map(f => {
-            const p = f.properties; // shortcut so we can write p.Name instead of f.properties.Name
-
-            // check which dataset this feature is from (sm or lb) by looking for a field unique to each one
-            // const isSM = p.SAMNUMBER !== undefined is asking "does this feature have a SAM number field"
-            // if yes isSM becomes true
-            return `
+function buildFeatureList(f) {
+    const p = f.properties; 
+    const isSM = p.SAMNumber !== undefined
+    if (isSM) {
+        return `
             <div class="result-item">
                 <h3>${p.Name.trim()}</h3>
                 <dl>
@@ -156,39 +139,46 @@ function renderResults(smFeatures, lbFeatures) {
                 </dl>
                 <a href="${p.Report}" target="_blank" rel="noopener">View Cadw Report &rarr;</a>
             </div>`;
-            }).join(''); // converts the list into a single string with nothing between each item   
+        } else {
+            return `
+            <div class="result-item">
+                <h3>${p.Name.trim()}</h3>
+                <dl>
+                    <dt>Grade</dt><dd>${p.Grade}</dd>
+                    <dt>Community</dt><dd>${p.Community}</dd>
+                    <dt>Designated</dt><dd>${p.DesignationDate ? p.DesignationDate.slice(0, 10) : 'Unknown'}</dd>
+                </dl>
+                <a href="${p.Report}" target="_blank" rel="noopener">View Cadw Report &rarr;</a>
+            </div>`;
         }
+    }
+
+
+// features is the hits list passed in from runSpatialQuery
+function renderResults(smFeatures, lbFeatures) {
+    const panel = document.getElementById('results-panel'); // find the results panel div
+    const smList = document.getElementById('scheduled-monuments'); // find the div where results will be listed
+    const lbList = document.getElementById('listed-buildings'); // find the div where results will be listed
+
+    if (smFeatures.length === 0) {
+        // if no monuments were hit, show a message instead
+        smList.innerHTML = '<p class="no-results">No assets intersect this area.</p>';
+    } else {
+        smList.innerHTML = smFeatures.map(f => buildFeatureList(f)).join('');
+    }
 
     if (lbFeatures.length === 0) {
         // if no monuments were hit, show a message instead
         lbList.innerHTML = '<p class="no-results">No assets intersect this area.</p>';
     } else {
-        // map() loops through each feature and transforms it into a chunk of HTML
-        // join('') converts the resulting list of HTML strings into one single string
-        // innerHTML puts that string into the results div on the page
-        lbList.innerHTML = lbFeatures.map(f => {
-            const p = f.properties; // shortcut so we can write p.Name instead of f.properties.Name
+        lbList.innerHTML = lbFeatures.map(f => buildFeatureList(f)).join('');
+    }
 
-            // check which dataset this feature is from (sm or lb) by looking for a field unique to each one
-            // const isSM = p.SAMNUMBER !== undefined is asking "does this feature have a SAM number field"
-            // if yes isSM becomes true
-            return `
-            <div class="result-item">
-                    <h3>${p.Name.trim()}</h3>
-                    <dl>
-                        <dt>Grade</dt><dd>${p.Grade}</dd>
-                        <dt>Community</dt><dd>${p.Community}</dd>
-                        <dt>Designated</dt><dd>${p.DesignationDate ? p.DesignationDate.slice(0, 10) : 'Unknown'}</dd>
-                    </dl>
-                    <a href="${p.Report}" target="_blank" rel="noopener">View Cadw Report &rarr;</a>
-                </div>`;
-            }).join(''); // converts the list into a single string with nothing between each item   
-        }
 
     panel.classList.remove('hidden'); // removes hidden so panel becomes visible.
 }
 
 // find the close button and listen for a click, then run this function
 document.getElementById('close-results').addEventListener('click', function () {
-    document.getElementById('results-panel').classList.add('hidden'); // add hidden class back to hide the panel
+document.getElementById('results-panel').classList.add('hidden'); // add hidden class back to hide the panel
 });
