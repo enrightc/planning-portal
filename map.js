@@ -48,7 +48,7 @@ const datasets = [
 
 
 
-// Load and display Scheduled Monuments layer
+// Load and display datasets
 datasets.forEach(dataset => {
     fetch(dataset.file)
     .then(r => r.json())
@@ -93,18 +93,14 @@ map.on('draw:created', function (e) {
 
 // drawnPolygon is the shape the user drew, passed in from the draw event
 function runSpatialQuery(drawnPolygon) {
-    if (!smData || !lbData) return; // if the sm or '||' lb GeoJSON hasn't loaded yet, stop here
+    if (datasets.some(d => !d.data)) return; // if data hasn't loaded yet, stop here
 
-    // create a new list called hits
-    // go through every scheduled monument in smData and keep only the ones that intersect the drawn polygon
-    const smHits = smData.features.filter(feature =>
-        turf.booleanIntersects(drawnPolygon, feature) // returns true or false for each monument
-    );
-    const lbHits = lbData.features.filter(feature => 
-        turf.booleanIntersects(drawnPolygon, feature)
-    );
+    datasets.forEach(dataset => {
+        dataset.hits = dataset.data.features.filter(feature =>
+        turf.booleanIntersects(drawnPolygon, feature) )
+    })
 
-    renderResults(smHits, lbHits); // pass sm and lb hits separately to renderResults
+    renderResults(datasets); 
 }
 
 function buildFeatureList(f) {
@@ -139,27 +135,35 @@ function buildFeatureList(f) {
 
 
 // features is the hits list passed in from runSpatialQuery
-function renderResults(smFeatures, lbFeatures) {
+function renderResults(datasets) {
+
+
     const panel = document.getElementById('results-panel'); // find the results panel div
-    const smList = document.getElementById('scheduled-monuments'); // find the div where results will be listed
-    const lbList = document.getElementById('listed-buildings'); // find the div where results will be listed
-
-    if (smFeatures.length === 0) {
-        // if no monuments were hit, show a message instead
-        smList.innerHTML = '<p class="no-results">No assets intersect this area.</p>';
-    } else {
-        smList.innerHTML = smFeatures.map(f => buildFeatureList(f)).join('');
-    }
-
-    if (lbFeatures.length === 0) {
-        // if no monuments were hit, show a message instead
-        lbList.innerHTML = '<p class="no-results">No assets intersect this area.</p>';
-    } else {
-        lbList.innerHTML = lbFeatures.map(f => buildFeatureList(f)).join('');
-    }
-
+    const summaryDiv = document.getElementById('summary')
+        
+    summaryDiv.innerHTML = datasets
+    .filter(dataset => dataset.hits.length > 0)
+    .map(dataset => `
+        <div class="summary-item">
+            <p>${dataset.label}: ${dataset.hits.length}</p>
+            <div class="item-btns">    
+                <button onClick="openModal('${dataset.id}')">More info</button>
+                <a id="download">&#x2B07;</a>
+            </div>
+        </div>`)
+    .join('');
 
     panel.classList.remove('hidden'); // removes hidden so panel becomes visible.
+}
+
+
+function openModal(datasetId) {
+    const dataset = datasets.find(d => d.id === datasetId);
+    const modalList = document.getElementById('modal-list');
+    
+    modalList.innerHTML = dataset.hits.map(f => buildFeatureList(f)).join('');
+    
+    document.getElementById('modal').classList.remove('hidden');
 }
 
 // find the close button and listen for a click, then run this function
@@ -167,6 +171,9 @@ document.getElementById('close-results').addEventListener('click', function () {
 document.getElementById('results-panel').classList.add('hidden'); // add hidden class back to hide the panel
 });
 
-document.getElementById('refresh').addEventListener('click', function () {
-    location.reload();
-})
+document.getElementById('close-modal').addEventListener('click', function() {
+    document.getElementById('modal').classList.add('hidden');
+});
+
+
+

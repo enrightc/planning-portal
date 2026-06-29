@@ -18,25 +18,25 @@
 <body>
 
     <div id="map"></div>
-
-    <button id="refresh" class="refresh-btn">Refresh</button>
-
+    
     <div id="results-panel" class="hidden">
         <div id="results-header">
             <h2>Intersecting Features</h2>
             <button id="close-results">&#x2715;</button>
         </div>
 
+        <!-- Summary view -->
+        <div id="summary"></div>
 
-        
 
-        <!-- Tab links -->
-        <div class="tabs">
-            <div class="tab">Scheduled Monuments:<span class="sm-count"></span></div>
-            <div class="tab">Listed Buildings</div>
+        <!-- Modal -->
+        <div id="modal" class="hidden">
+            <div id="modal-content">
+                <button id="close-modal">&#x2715;</button>
+                <div id="modal-list"></div>
+            </div>
         </div>
 
-        
 
     </div>
 
